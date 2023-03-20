@@ -160,7 +160,7 @@ io.on('connection', (socket) => {
             host: true,
             video: video,
             audio: audio,
-            ipAddr: socket.handshake.address
+            ipAddr: socket.handshake.headers['x-forwarded-for'].split(',')[0]
         }
     });
 
@@ -173,7 +173,7 @@ io.on('connection', (socket) => {
             host: false,
             video: video,
             audio: audio,
-            ipAddr: socket.handshake.address
+            ipAddr: socket.handshake.headers['x-forwarded-for'].split(',')[0]
         };
         console.log(`${userName} joined room ${roomId}`);
         console.log(socketList);
