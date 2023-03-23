@@ -13,15 +13,11 @@ dotenv.config();
 let socketList = {};
 
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
-app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
+// app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors());
 
 const PORT = process.env.PORT || 8080;
 
-// const getMyIp = async () => {
-//     const ip_response = await axios(process.env.AMAZON_IP_URL);
-//     myIPaddr = ip_response.data.trim();
-// }
 
 const io = require("socket.io")(server, {
     cors: {
@@ -151,29 +147,35 @@ io.on('connection', (socket) => {
     });
 
     //Create room
-    socket.on('BE-createRoom', ({ roomId, userName, userEmail, video, audio }) => {
+    socket.on('BE-createRoom', ({ roomId, userName, userFullName, userEmail, video, audio }) => {
         socket.join(roomId);
         console.log(`${userName} created room ${roomId}`);
+        const userIp = socket.handshake.headers['x-forwarded-for'] ?
+            socket.handshake.headers['x-forwarded-for'].split(',')[0] : socket.handshake.address;
         socketList[socket.id] = {
             userName: userName,
             userEmail: userEmail,
+            userFullName: userFullName,
             host: true,
             video: video,
             audio: audio,
-            ipAddr: socket.handshake.headers['x-forwarded-for'].split(',')[0]
+            ipAddr: userIp
         }
     });
 
     // Join Room
-    socket.on('BE-joinRoom', async ({ roomId, userName, userEmail, video, audio }) => {
+    socket.on('BE-joinRoom', async ({ roomId, userName, userFullName, userEmail, video, audio }) => {
         socket.join(roomId);
+        const userIp = socket.handshake.headers['x-forwarded-for'] ?
+            socket.handshake.headers['x-forwarded-for'].split(',')[0] : socket.handshake.address;
         socketList[socket.id] = {
             userName: userName,
             userEmail: userEmail,
+            userFullName: userFullName,
             host: false,
             video: video,
             audio: audio,
-            ipAddr: socket.handshake.headers['x-forwarded-for'].split(',')[0]
+            ipAddr: userIp
         };
         console.log(`${userName} joined room ${roomId}`);
         console.log(socketList);

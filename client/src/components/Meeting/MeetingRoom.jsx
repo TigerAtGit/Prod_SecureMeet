@@ -63,6 +63,7 @@ export default function MeetingRoom() {
   const { isHost, userName } = state;
   const currentUser = userName; //localStorage.getItem('userName');
   const userEmail = JSON.parse(localStorage.getItem('user')).email;
+  const userFullName = JSON.parse(localStorage.getItem('user')).name;
 
   const [peers, setPeers] = useState([]);
   const [userAV, setUserAV] = useState({
@@ -91,6 +92,7 @@ export default function MeetingRoom() {
       isHost ? socket.emit('BE-createRoom', {
         roomId: roomId,
         userName: currentUser,
+        userFullName: userFullName,
         userEmail: userEmail,
         video: userAV.localUser.video,
         audio: userAV.localUser.audio
@@ -98,6 +100,7 @@ export default function MeetingRoom() {
         socket.emit('BE-joinRoom', {
           roomId: roomId,
           userName: currentUser,
+          userFullName: userFullName,
           userEmail: userEmail,
           video: userAV.localUser.video,
           audio: userAV.localUser.audio
@@ -369,8 +372,8 @@ export default function MeetingRoom() {
           closeParticipantsList={handleParticipantsClose}
           participantsOpen={participantsOpen}
         />
-        <Chat open={chatOpen} roomId={roomId} />
-        <Participants participants={participants} open={participantsOpen} />
+        <Chat open={chatOpen} roomId={roomId} thisUser={userName} />
+        <Participants isHost={isHost} participants={participants} open={participantsOpen} />
       </Container>
     </ThemeProvider>
   )

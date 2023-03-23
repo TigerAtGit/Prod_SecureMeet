@@ -10,6 +10,7 @@ import CallEndIcon from '@mui/icons-material/CallEnd';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ChatIcon from '@mui/icons-material/Chat';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import ScreenShareRoundedIcon from '@mui/icons-material/ScreenShareRounded';
 
 export default function BottomBar({
   roomId,
@@ -37,7 +38,7 @@ export default function BottomBar({
           display: 'flex',
           color: 'white',
           padding: 1,
-        }}>Room &nbsp;<b>{roomId}</b>, {isHost ? 'HOST' : 'USER'}</Typography>
+        }}><b>{roomId}</b>, {isHost ? 'HOST' : 'USER'}</Typography>
         <Box
           onClick={toggleCamera}
           sx={{
@@ -61,6 +62,17 @@ export default function BottomBar({
           }}>
           {userAV.localUser.audio ?
             <MicIcon sx={{ color: 'white' }} /> : <MicOffIcon sx={{ color: 'white' }} />}
+        </Box>
+        <Box
+          // onClick={toggleAudio}
+          sx={{
+            ':hover': { bgcolor: '#5A5A5A' },
+            backgroundColor: '#808080',
+            display: 'flex',
+            padding: 1,
+            borderRadius: 2
+          }}>
+          <ScreenShareRoundedIcon sx={{ color: 'white' }} />
         </Box>
         <Box
           onClick={leaveRoom}

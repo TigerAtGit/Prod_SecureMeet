@@ -10,8 +10,7 @@ import Box from '@mui/material/Box';
 
 const drawerWidth = 300;
 
-export default function Chat({ display, roomId, clickChat, open }) {
-  const currentUser = localStorage.getItem('userName');
+export default function Chat({ roomId, open, thisUser }) {
   const [msg, setMsg] = useState([]);
   const inputRef = useRef();
 
@@ -29,7 +28,7 @@ export default function Chat({ display, roomId, clickChat, open }) {
       const message = e.target.value;
 
       if (message) {
-        socket.emit('BE-sendMessage', { roomId, msg: message, sender: currentUser });
+        socket.emit('BE-sendMessage', { roomId, msg: message, sender: thisUser });
         e.target.value = '';
         inputRef.current.value = '';
       }
@@ -69,7 +68,7 @@ export default function Chat({ display, roomId, clickChat, open }) {
                     borderRadius: 2,
                   }}>
                   <Typography variant='p' fontWeight={'600'} display={'block'}>
-                    {sender === currentUser ? 'Me': sender}
+                    {sender === thisUser ? 'Me': sender}
                   </Typography>
                   <Typography variant='p'>
                     {msg}
