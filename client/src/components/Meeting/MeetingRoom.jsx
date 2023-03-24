@@ -35,6 +35,7 @@ const DisplayName = styled('div')({
 
 
 export default function MeetingRoom() {
+
   const [chatOpen, setChatOpen] = useState(false);
   const [participantsOpen, setParticipantsOpen] = useState(false);
   const [participants, setParticipants] = useState([]);
@@ -49,7 +50,7 @@ export default function MeetingRoom() {
   };
 
   const handleParticipantsOpen = () => {
-    getParticipantsList(socket.id);
+    getParticipantsList();
     setChatOpen(false);
     setParticipantsOpen(true);
   };
@@ -178,6 +179,24 @@ export default function MeetingRoom() {
         );
       });
 
+      socket.on('FE-userRemoved', ({ userId, userName }) => {
+        const peerIdx = findPeer(userId);
+        peerIdx.peer.destroy();
+        setPeers((users) => {
+          users = users.filter((user) => user.peerId !== peerIdx.peer.peerId);
+          return [...users];
+        });
+        peersRef.current = peersRef.current.filter(
+          ({ peerId }) => peerId !== userId
+        );
+        alert(`${userName} has been removed from the meeting.`);
+      });
+
+      socket.on('FE-youRemoved', () => {
+        alert('You have been removed from the meeting');
+        window.location.href = '/';
+      })
+
     });
 
 
@@ -267,16 +286,9 @@ export default function MeetingRoom() {
 
   const leaveRoom = () => {
     socket.emit('BE-leaveRoom', { roomId, leaver: currentUser });
-    localStorage.removeItem('userName');
     window.location.href = '/';
   };
 
-  // To get list of participants in the room
-
-  const getParticipantsList = (socketId) => {
-    socket.emit('BE-getParticipants', { roomId, socketId });
-    socket.on('FE-getParticipants', (partcipants) => setParticipants(partcipants));
-  }
 
   const toggleCamera = (e) => {
     let audio = userAV.localUser.audio;
@@ -316,9 +328,21 @@ export default function MeetingRoom() {
   }
 
   const openSettings = () => {
-    peers.forEach((p) => {
-      console.log(p.peerId);
-    });
+    console.log('openSettings');
+  }
+
+  // To get list of participants in the room
+  const getParticipantsList = () => {
+    socket.emit('BE-getParticipants', { roomId });
+    socket.on('FE-getParticipants', (partcipants) => setParticipants(partcipants));
+  }
+
+  // To remove a participant
+  const removeParticipant = (participantId, username) => {
+    let removeMessage = `Remove ${username} from meeting ?`
+    if (window.confirm(removeMessage)) {
+      socket.emit('BE-removeUser', { roomId, clientId: participantId });
+    }
   }
 
 
@@ -360,6 +384,7 @@ export default function MeetingRoom() {
         <BottomBar
           roomId={roomId}
           isHost={isHost}
+          username={currentUser}
           userAV={userAV}
           toggleCamera={toggleCamera}
           toggleAudio={toggleAudio}
@@ -373,7 +398,12 @@ export default function MeetingRoom() {
           participantsOpen={participantsOpen}
         />
         <Chat open={chatOpen} roomId={roomId} thisUser={userName} />
-        <Participants isHost={isHost} participants={participants} open={participantsOpen} />
+        <Participants
+          isHost={isHost}
+          participants={participants}
+          open={participantsOpen}
+          removeParticipant={removeParticipant}
+        />
       </Container>
     </ThemeProvider>
   )

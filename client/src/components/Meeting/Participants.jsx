@@ -12,19 +12,22 @@ import Avatar from '@mui/material/Avatar';
 import PersonIcon from '@mui/icons-material/Person';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import UserModal from './UserModal';
+import PersonRemoveRounded from '@mui/icons-material/PersonRemoveRounded';
 
 
 const drawerWidth = 300;
 
-export default function Participants({ isHost, participants, open }) {
+export default function Participants({ isHost, participants, open, removeParticipant }) {
   const users = participants;
 
   const [modalOpen, setModalOpen] = useState(false);
   const handleClose = () => setModalOpen(false);
   const [modalInfo, setModalInfo] = useState({});
+  const [modalUserId, setModalUserId] = useState(null);
 
-  const openUserModal = (userInfo) => {
+  const openUserModal = (userId, userInfo) => {
     setModalInfo(userInfo);
+    setModalUserId(userId);
     setModalOpen(true);
   }
 
@@ -58,14 +61,24 @@ export default function Participants({ isHost, participants, open }) {
                       </Avatar>
                     </Tooltip>
                   </ListItemAvatar>
-                  <ListItemText primary={info.userName} />
-                  {isHost && <MoreVertIcon
-                    onClick={() => openUserModal(info)}
-                    sx={{
-                      ':hover': { bgcolor: 'ButtonFace' },
-                      cursor: 'pointer'
-                    }}
-                  ></MoreVertIcon>
+                  <ListItemText primary={info.host ? info.userName + ' (Host)' : info.userName} />
+                  {isHost && <>
+                    <PersonRemoveRounded
+                      onClick={() => removeParticipant(userId, info.userName)}
+                      sx={{
+                        ':hover': { bgcolor: 'ButtonFace' },
+                        marginRight: 1,
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <MoreVertIcon
+                      onClick={() => openUserModal(userId, info)}
+                      sx={{
+                        ':hover': { bgcolor: 'ButtonFace' },
+                        cursor: 'pointer'
+                      }}
+                    ></MoreVertIcon>
+                  </>
                   }
                 </ListItem>
               )
@@ -74,7 +87,12 @@ export default function Participants({ isHost, participants, open }) {
         </List>
       </Drawer>
       {modalOpen && createPortal(
-        <UserModal open={modalOpen} handleClose={handleClose} userInfo={modalInfo} />,
+        <UserModal
+          open={modalOpen}
+          handleClose={handleClose}
+          userInfo={modalInfo}
+          userId={modalUserId}
+          removeParticipant={removeParticipant} />,
         document.body
       )}
     </>

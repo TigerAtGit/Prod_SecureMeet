@@ -11,6 +11,7 @@ const { body, validationResult } = require('express-validator');
 
 dotenv.config();
 let socketList = {};
+let blockedIPs = {};
 
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 // app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
@@ -52,7 +53,7 @@ app.post(
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
-        console.log(req.body);
+        // console.log(req.body);
         const { firstName, lastName, email, password } = req.body;
         let newUser = new User({
             firstName,
@@ -62,7 +63,7 @@ app.post(
                 password,
                 process.env.CRYPTO_SECRET
             ).toString(),
-            lastIp: myIPaddr
+            lastIp: req.ip
         });
 
         try {
@@ -111,6 +112,21 @@ app.post(
     }
 );
 
+// API request to block an IP address
+app.post(
+    "/api/blockIP",
+    (req, res) => {
+        const { ipAddr, userEmail } = req.body;
+        blockedIPs[ipAddr] = userEmail;
+        console.log(`Host requested to block IP: ${ipAddr}`);
+        console.log(blockedIPs);
+        res.status(200).json({
+            success: true,
+        });
+    }
+);
+
+
 // connecting to MongoDB URI
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -135,6 +151,17 @@ io.on('connection', (socket) => {
         console.log(`User disconnected: ${leavingSocket}`);
     });
 
+    // To check if IP of user is blocked
+    socket.on('BE-isIPblocked', () => {
+        const userIp = socket.handshake.headers['x-forwarded-for'] ?
+            socket.handshake.headers['x-forwarded-for'].split(',')[0] : socket.handshake.address;
+        let isIPblocked = false;
+        if(userIp in blockedIPs) {
+            isIPblocked = true;
+        }
+        socket.emit('FE-errorIPblocked', { isIPblocked });
+    })
+
     socket.on('BE-checkUser', async ({ roomId, userName }) => {
         let error = false;
         const clients = await io.in(roomId).fetchSockets();
@@ -146,7 +173,7 @@ io.on('connection', (socket) => {
         socket.emit('FE-errorUserExists', { error });
     });
 
-    //Create room
+    // Create room
     socket.on('BE-createRoom', ({ roomId, userName, userFullName, userEmail, video, audio }) => {
         socket.join(roomId);
         console.log(`${userName} created room ${roomId}`);
@@ -203,14 +230,14 @@ io.on('connection', (socket) => {
     // })
 
     socket.on('BE-callUser', ({ userToCall, from, signal }) => {
-        console.log(`${from} calling user ${userToCall}`);
+        // console.log(`${from} calling user ${userToCall}`);
         io.to(userToCall).emit('FE-receiveCall', {
             signal, from, info: socketList[socket.id]
         });
     });
 
     socket.on('BE-acceptCall', ({ signal, caller }) => {
-        console.log(`Accept call from ${caller}`);
+        // console.log(`Accept call from ${caller}`);
         io.to(caller).emit('FE-callAccepted', {
             signal, answerId: socket.id
         });
@@ -220,6 +247,28 @@ io.on('connection', (socket) => {
         io.in(roomId).emit("FE-receiveMessage", { msg, sender });
     });
 
+    socket.on("BE-toggleCameraAudio", ({ roomId, switchTarget }) => {
+        if (switchTarget === "video") {
+            socketList[socket.id].video = !socketList[socket.id].video;
+        } else {
+            socketList[socket.id].audio = !socketList[socket.id].audio;
+        }
+        socket.broadcast
+        .to(roomId)
+        .emit("FE-toggleCamera", { userId: socket.id, switchTarget });
+    });
+    
+    socket.on("BE-getParticipants", async ({ roomId }) => {
+        const clients = await io.in(roomId).fetchSockets();
+        const usersInRoom = [];
+        clients.forEach((client) => {
+            usersInRoom.push({
+                userId: client.id, info: socketList[client.id]
+            });
+        });
+        io.to(roomId).emit('FE-getParticipants', usersInRoom);
+    })
+    
     socket.on("BE-leaveRoom", ({ roomId, leaver }) => {
         var leavingSocket = socket.id;
         console.log(`${leaver} left room ${roomId}`);
@@ -230,36 +279,25 @@ io.on('connection', (socket) => {
         delete socketList[leavingSocket];
     });
 
-    socket.on("BE-toggleCameraAudio", ({ roomId, switchTarget }) => {
-        if (switchTarget === "video") {
-            socketList[socket.id].video = !socketList[socket.id].video;
-        } else {
-            socketList[socket.id].audio = !socketList[socket.id].audio;
-        }
-        socket.broadcast
-            .to(roomId)
-            .emit("FE-toggleCamera", { userId: socket.id, switchTarget });
-    });
-
-    socket.on("BE-getParticipants", async ({ roomId, clientId }) => {
+    socket.on("BE-removeUser", async ({ roomId, clientId }) => {
         const clients = await io.in(roomId).fetchSockets();
-        const usersInRoom = [];
         clients.forEach((client) => {
-            usersInRoom.push({
-                userId: client.id, info: socketList[client.id]
-            });
+            if (client.id === clientId) {
+                console.log(`Removing user ${socketList[clientId].userName}`)
+                client.to(roomId)
+                    .emit("FE-userRemoved", { userId: clientId, userName: socketList[clientId].userName });
+                io.to(clientId).emit("FE-youRemoved");
+                // client.disconnect(true);
+                delete socketList[clientId];
+            }
         });
-        io.to(roomId).emit('FE-getParticipants', usersInRoom);
     })
+
+    // socketList.on("BE-blockIP", ({ ipToBlocked, userEmail }) => {
+    //     blockedIPs[ipToBlocked] = userEmail;
+    //     socketList.emit("FE-ipBlocked")
+    // })
 });
 
 
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}.`));
-
-/*
-Changes:
--Removed .broadcast from leave room
--Added createRoom event
--Modified disconnect logic
--Added to leave room logic
-*/

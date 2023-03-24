@@ -15,6 +15,7 @@ import ScreenShareRoundedIcon from '@mui/icons-material/ScreenShareRounded';
 export default function BottomBar({
   roomId,
   isHost,
+  username,
   userAV,
   toggleCamera,
   toggleAudio,
@@ -38,7 +39,7 @@ export default function BottomBar({
           display: 'flex',
           color: 'white',
           padding: 1,
-        }}><b>{roomId}</b>, {isHost ? 'HOST' : 'USER'}</Typography>
+        }}><b>{roomId}</b>, {username}</Typography>
         <Box
           onClick={toggleCamera}
           sx={{

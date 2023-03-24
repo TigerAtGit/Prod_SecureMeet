@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
-// import socket from '../socket';
+import React, { useRef, useState } from 'react';
+import socket from '../socket';
 import Navbar from './Navbar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -60,16 +60,13 @@ export default function JoinMeet() {
       setErrMsg('Either room or userName is not defined');
       alert(`Something wrong: ${errMsg}`);
     } else {
-      // socket.emit('BE-checkUser', { roomId: roomId, userName: userName });
-      // socket.on('FE-errorUserExists', ({ error }) => {
-      //   if (!error) {
-          const roomId = roomRef.current?.value;
-          const userName = userRef.current?.value;
-  
-          if (!userName || !roomId) return;
-  
-          // localStorage.setItem('userName', userName);
-          // localStorage.setItem('roomId', roomId);
+      socket.emit('BE-isIPblocked');
+      socket.on('FE-errorIPblocked', ({ isIPblocked }) => {
+        if (isIPblocked) {
+          alert('Your IP has been blocked by the host!');
+          return;
+        }
+        else {
           navigate('/setupRoom', {
             state: {
               isHost: false,
@@ -77,12 +74,8 @@ export default function JoinMeet() {
               roomId: roomId
             }
           });
-    //     } else {
-    //       setErr(error);
-    //       setErrMsg('User already exists.');
-    //       console.log(`Some error occurred: ${errMsg}`);
-    //     }
-    //   });
+        }
+      })
     }
   }
 
