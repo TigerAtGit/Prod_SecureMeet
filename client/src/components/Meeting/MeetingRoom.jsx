@@ -11,6 +11,7 @@ import Container from '@mui/system/Container';
 import { CssBaseline } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { styled } from '@mui/system';
+import Typography from '@mui/material/Typography';
 
 
 const theme = createTheme({
@@ -25,6 +26,7 @@ const DisplayName = styled('div')({
   background: '#454545',
   color: '#FFFFFF',
   position: 'absolute',
+  borderTopRightRadius: 5,
   padding: 5,
   marginBottom: 8,
   marginLeft: 3,
@@ -35,10 +37,6 @@ const DisplayName = styled('div')({
 
 
 export default function MeetingRoom() {
-
-  const [chatOpen, setChatOpen] = useState(false);
-  const [participantsOpen, setParticipantsOpen] = useState(false);
-  const [participants, setParticipants] = useState([]);
 
   const handleChatOpen = () => {
     setParticipantsOpen(false);
@@ -59,6 +57,11 @@ export default function MeetingRoom() {
     setParticipantsOpen(false);
   };
 
+  const [chatOpen, setChatOpen] = useState(false);
+  const [participantsOpen, setParticipantsOpen] = useState(false);
+  const [participants, setParticipants] = useState([]);
+  const [screenShare, setScreenShare] = useState(false);
+
   const { roomId } = useParams();
   const { state } = useLocation();
   const { isHost, userName } = state;
@@ -76,6 +79,7 @@ export default function MeetingRoom() {
 
   const peersRef = useRef([]);
   const userVideoRef = useRef();
+  const screenTrackRef = useRef();
   const userStream = useRef();
 
   useEffect(() => {
@@ -83,6 +87,7 @@ export default function MeetingRoom() {
     navigator.mediaDevices.getUserMedia({
       video: true, audio: true
     }).then((stream) => {
+
       userVideoRef.current.srcObject = stream;
       userVideoRef.current.srcObject
         .getVideoTracks()[0].enabled = userAV.localUser.video;
@@ -193,12 +198,11 @@ export default function MeetingRoom() {
       });
 
       socket.on('FE-youRemoved', () => {
-        alert('You have been removed from the meeting');
+        alert('You have been removed from the meeting!');
         window.location.href = '/';
       })
 
     });
-
 
     socket.on('FE-toggleCamera', ({ userId, switchTarget }) => {
       const peerIdx = findPeer(userId);
@@ -250,6 +254,7 @@ export default function MeetingRoom() {
     return peer;
   }
 
+
   function addPeer(incomingSignal, callerId, stream) {
     const peer = new Peer({
       initiator: false,
@@ -270,9 +275,11 @@ export default function MeetingRoom() {
     return peer;
   }
 
+
   function findPeer(pid) {
     return peersRef.current.find((p) => p.peerId === pid);
   }
+
 
   function createUserVideo(peer, index, arr) {
     return (
@@ -283,6 +290,7 @@ export default function MeetingRoom() {
       </Grid>
     );
   }
+
 
   const leaveRoom = () => {
     socket.emit('BE-leaveRoom', { roomId, leaver: currentUser });
@@ -306,6 +314,7 @@ export default function MeetingRoom() {
     socket.emit('BE-toggleCameraAudio', { roomId, switchTarget: 'video' });
   }
 
+
   const toggleAudio = (e) => {
     let video = userAV.localUser.video;
     setUserAV((preList) => {
@@ -327,8 +336,49 @@ export default function MeetingRoom() {
     socket.emit('BE-toggleCameraAudio', { roomId, switchTarget: 'audio' });
   }
 
+
   const openSettings = () => {
     console.log('openSettings');
+  }
+
+  // To share screen
+  const shareScreen = () => {
+
+    if (!screenShare) {
+      navigator.mediaDevices
+        .getDisplayMedia({ cursor: true })
+        .then((stream) => {
+          const screenTrack = stream.getTracks()[0];
+          peersRef.current.forEach(({ peer }) => {
+            peer.replaceTrack(
+              peer.streams[0]
+                .getTracks()
+                .find((track) => track.kind === 'video'),
+              screenTrack,
+              userStream.current
+            );
+          });
+
+          screenTrack.onended = () => {
+            peersRef.current.forEach(({ peer }) => {
+              peer.replaceTrack(
+                screenTrack,
+                peer.streams[0]
+                  .getTracks()
+                  .find((track) => track.kind === 'video'),
+                userStream.current
+              );
+            });
+            userVideoRef.current.srcObject = userStream.current;
+            setScreenShare(false);
+          };
+          userVideoRef.current.srcObject = stream;
+          screenTrackRef.current = screenTrack;
+          setScreenShare(true);
+        });
+    } else {
+      screenTrackRef.current.onended();
+    }
   }
 
   // To get list of participants in the room
@@ -380,15 +430,26 @@ export default function MeetingRoom() {
           {peers && peers.map((peer, index, arr) =>
             createUserVideo(peer, index, arr))}
         </Grid>
+        
+        <Typography variant='h5' sx={{
+          marginTop: "70vh",
+          position: "absolute",
+          left: '5vw',
+          color: 'white',
+          fontWeight: "medium",
+          padding: 1,
+        }}>Room Id: {roomId} <br /> User: {currentUser}</Typography>
+
         <Chat />
         <BottomBar
           roomId={roomId}
-          isHost={isHost}
           username={currentUser}
           userAV={userAV}
           toggleCamera={toggleCamera}
           toggleAudio={toggleAudio}
           leaveRoom={leaveRoom}
+          shareScreen={shareScreen}
+          screenShareActive={screenShare}
           openSettings={openSettings}
           openChat={handleChatOpen}
           closeChat={handleChatClose}

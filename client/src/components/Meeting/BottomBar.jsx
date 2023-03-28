@@ -1,7 +1,6 @@
 import React from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import MicIcon from '@mui/icons-material/Mic';
@@ -11,15 +10,17 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import ChatIcon from '@mui/icons-material/Chat';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import ScreenShareRoundedIcon from '@mui/icons-material/ScreenShareRounded';
+import StopScreenShareRoundedIcon from '@mui/icons-material/StopScreenShareRounded';
 
 export default function BottomBar({
   roomId,
-  isHost,
   username,
   userAV,
   toggleCamera,
   toggleAudio,
   leaveRoom,
+  shareScreen,
+  screenShareActive,
   openSettings,
   openChat,
   closeChat,
@@ -29,17 +30,11 @@ export default function BottomBar({
   participantsOpen
 }) {
   return (
-    <>
       <Stack direction="row" marginTop="70vh" position="absolute" spacing={1} sx={{
         backgroundColor: 'black',
         padding: 2,
         borderRadius: 2
       }}>
-        <Typography sx={{
-          display: 'flex',
-          color: 'white',
-          padding: 1,
-        }}><b>{roomId}</b>, {username}</Typography>
         <Box
           onClick={toggleCamera}
           sx={{
@@ -65,7 +60,7 @@ export default function BottomBar({
             <MicIcon sx={{ color: 'white' }} /> : <MicOffIcon sx={{ color: 'white' }} />}
         </Box>
         <Box
-          // onClick={toggleAudio}
+          onClick={shareScreen}
           sx={{
             ':hover': { bgcolor: '#5A5A5A' },
             backgroundColor: '#808080',
@@ -73,18 +68,21 @@ export default function BottomBar({
             padding: 1,
             borderRadius: 2
           }}>
-          <ScreenShareRoundedIcon sx={{ color: 'white' }} />
+          {screenShareActive ? <StopScreenShareRoundedIcon sx={{ color: 'white' }} /> :
+            <ScreenShareRoundedIcon sx={{ color: 'white' }} />
+          }
         </Box>
         <Box
           onClick={leaveRoom}
           sx={{
-            ':hover': { bgcolor: '#5A5A5A' },
-            backgroundColor: '#808080',
+            ':hover': { bgcolor: '#B00000' },
+            backgroundColor: '#FF0000',
             display: 'flex',
             padding: 1,
+            paddingX: 2,
             borderRadius: 2
           }}>
-          <CallEndIcon sx={{ color: 'red' }} />
+          <CallEndIcon sx={{ color: 'white' }} />
         </Box>
         <Box
           onClick={openSettings}
@@ -108,7 +106,9 @@ export default function BottomBar({
             padding: 1,
             borderRadius: 2
           }}>
-          <ChatIcon sx={{ color: 'white' }} />
+          {chatopen ? <ChatIcon sx={{ color: 'black' }} /> :
+            <ChatIcon sx={{ color: 'white' }} />
+          }
         </Box>
         <Box
           onClick={() => {
@@ -121,9 +121,10 @@ export default function BottomBar({
             padding: 1,
             borderRadius: 2
           }}>
-          <PeopleAltIcon sx={{ color: 'white' }} />
+          {participantsOpen ? <PeopleAltIcon sx={{ color: 'black' }} /> :
+            <PeopleAltIcon sx={{ color: 'white' }} />
+          }
         </Box>
       </Stack>
-    </>
   )
 }

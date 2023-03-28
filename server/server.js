@@ -1,5 +1,6 @@
 const app = require('express')();
 const server = require('http').createServer(app);
+const fetch = require('node-fetch');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -18,6 +19,8 @@ app.use(bodyParser.json({ limit: "30mb", extended: true }));
 app.use(cors());
 
 const PORT = process.env.PORT || 8080;
+const IP_INFO_TOKEN = process.env.IP_INFO_TOKEN;
+const IPQUALITYSCORE_TOKEN = process.env.IPQUALITYSCORE_TOKEN;
 
 
 const io = require("socket.io")(server, {
@@ -31,6 +34,7 @@ const io = require("socket.io")(server, {
 app.get('/', async (req, res) => {
     res.send(`Hello World! Your IP address: ${req.ip}`);
 });
+
 
 app.post(
     "/api/signup",
@@ -76,6 +80,7 @@ app.post(
     }
 );
 
+
 app.post(
     "/api/login",
     body("email", "This should be an email").trim(),
@@ -112,6 +117,7 @@ app.post(
     }
 );
 
+
 // API request to block an IP address
 app.post(
     "/api/blockIP",
@@ -122,6 +128,38 @@ app.post(
         console.log(blockedIPs);
         res.status(200).json({
             success: true,
+        });
+    }
+);
+
+
+// API request for getting IP details
+app.post(
+    "/api/ipInfo",
+    async (req, res) => {
+        const { ipAddr } = req.body;
+        const ipInfoResponse = await fetch(`https://ipinfo.io/${ipAddr}?token=${IP_INFO_TOKEN}`);
+        const data = await ipInfoResponse.json();
+        res.status(200).json({
+            success: true,
+            data: data
+        });
+    }
+);
+
+
+// API request for URL scanner
+app.post(
+    "/api/scanUrl",
+    async (req, res) => {
+        const { url } = req.body;
+        const ipInfoResponse = await fetch(
+            `https://ipqualityscore.com/api/json/url/${IPQUALITYSCORE_TOKEN}/${url}`
+        );
+        const data = await ipInfoResponse.json();
+        res.status(200).json({
+            success: true,
+            data: data
         });
     }
 );
@@ -156,7 +194,7 @@ io.on('connection', (socket) => {
         const userIp = socket.handshake.headers['x-forwarded-for'] ?
             socket.handshake.headers['x-forwarded-for'].split(',')[0] : socket.handshake.address;
         let isIPblocked = false;
-        if(userIp in blockedIPs) {
+        if (userIp in blockedIPs) {
             isIPblocked = true;
         }
         socket.emit('FE-errorIPblocked', { isIPblocked });
@@ -218,17 +256,6 @@ io.on('connection', (socket) => {
         socket.to(roomId).emit('FE-userJoin', usersInRoom);
     });
 
-    // socket.on('BE-joinRoom', ({ roomId, userName }) => {
-    //     socket.join(roomId);
-    //     socketList[socket.id] = { userName: userName, video: true, audio: true };
-    //     console.log(`${userName} joined room: ${roomId}`);
-    //     const users = [];
-    //     users.push({
-    //         userId: socket.id, info: socketList[socket.id]
-    //     })
-    //     socket.to(roomId).emit('FE-userJoin', users);
-    // })
-
     socket.on('BE-callUser', ({ userToCall, from, signal }) => {
         // console.log(`${from} calling user ${userToCall}`);
         io.to(userToCall).emit('FE-receiveCall', {
@@ -254,10 +281,10 @@ io.on('connection', (socket) => {
             socketList[socket.id].audio = !socketList[socket.id].audio;
         }
         socket.broadcast
-        .to(roomId)
-        .emit("FE-toggleCamera", { userId: socket.id, switchTarget });
+            .to(roomId)
+            .emit("FE-toggleCamera", { userId: socket.id, switchTarget });
     });
-    
+
     socket.on("BE-getParticipants", async ({ roomId }) => {
         const clients = await io.in(roomId).fetchSockets();
         const usersInRoom = [];
@@ -268,7 +295,7 @@ io.on('connection', (socket) => {
         });
         io.to(roomId).emit('FE-getParticipants', usersInRoom);
     })
-    
+
     socket.on("BE-leaveRoom", ({ roomId, leaver }) => {
         var leavingSocket = socket.id;
         console.log(`${leaver} left room ${roomId}`);
@@ -293,10 +320,6 @@ io.on('connection', (socket) => {
         });
     })
 
-    // socketList.on("BE-blockIP", ({ ipToBlocked, userEmail }) => {
-    //     blockedIPs[ipToBlocked] = userEmail;
-    //     socketList.emit("FE-ipBlocked")
-    // })
 });
 
 
