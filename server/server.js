@@ -67,7 +67,7 @@ app.post(
                 password,
                 process.env.CRYPTO_SECRET
             ).toString(),
-            lastIp: req.ip
+            // lastIp: req.ip
         });
 
         try {
@@ -98,7 +98,7 @@ app.post(
                         email: user.email,
                         password: user.password,
                     },
-                    "jwtsecret",
+                    process.env.JWT_SECRET,
                     { expiresIn: "1d" }
                 );
                 res.status(200).json({

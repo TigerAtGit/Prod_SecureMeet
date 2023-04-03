@@ -9,7 +9,7 @@ export default function Home() {
     <div className="App">
       <Navbar />
       <header className="App-header">
-        <h2 style={{maxWidth: "50vw"}}>SecureMeet - An IP based Meeting platform with Profanity Scanning</h2>
+        <h2 style={{maxWidth: "50vw"}}>SecureMeet - A Meeting platform with IP Blocking and Profanity Detection</h2>
         <ButtonGroup variant="contained" aria-label="outlined primary button group">
           <Button color='secondary' href='/createMeet'>Create Meet</Button>
           <Button color='success' href='/joinMeet'>Join a Meet</Button>
