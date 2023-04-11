@@ -14,7 +14,7 @@ import MenuItem from '@mui/material/MenuItem';
 
 const pages = [
   { pageName: 'Login', pageLink: '/login' },
-  { pageName: 'Signup', pageLink: '/signup' },
+  { pageName: 'Register', pageLink: '/register' },
 ];
 
 function Navbar() {

@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Protected from './components/Authentication/Protected';
 import Home from './components/Home';
 import Signup from './components/Authentication/Signup';
+import Verify from './components/Authentication/Verify';
 import Login from './components/Authentication/Login';
 import CreateMeet from './components/CreateMeet';
 import JoinMeet from './components/JoinMeet';
@@ -17,6 +18,7 @@ function App() {
         <Route exact path="/" element={<Home />} />
         <Route exact path="/login" element={<Login />} />
         <Route exact path="/signup" element={<Signup />} />
+        <Route exact path="/register" element={<Verify />} />
         <Route exact path="/createMeet" element={
           <Protected>
             <CreateMeet />

@@ -10,6 +10,8 @@ const Jwt = require('jsonwebtoken');
 const CryptoJS = require('crypto-js');
 const { body, validationResult } = require('express-validator');
 
+const sendmail = require('./controllers/mailController.js');
+
 dotenv.config();
 let socketList = {};
 let blockedIPs = {};
@@ -47,7 +49,6 @@ app.post(
             .trim()
             .isAlpha("en-IN")
             .optional({ checkFalsy: true }),
-        body("email", "This should be an email").trim().isEmail(),
         body("password", "Password should be atleast of 6 characters").isLength({
             min: 6,
         }),
@@ -79,6 +80,9 @@ app.post(
         }
     }
 );
+
+// API request to send an email
+app.post("/api/sendmail", sendmail);
 
 
 app.post(

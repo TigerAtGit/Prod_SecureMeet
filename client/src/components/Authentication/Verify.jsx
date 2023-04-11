@@ -1,20 +1,15 @@
 import React, { useState } from 'react';
-import Navbar from '../Navbar';
 import { useNavigate } from 'react-router-dom';
-import Avatar from '@mui/material/Avatar';
+import Navbar from '../Navbar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
-import IconButton from '@mui/material/IconButton';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Link from '@mui/material/Link';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import ContactMailRoundedIcon from '@mui/icons-material/ContactMailRounded';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
-import InputAdornment from '@mui/material/InputAdornment';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { BACKEND_URL } from '../../constants';
 
@@ -27,48 +22,73 @@ const theme = createTheme({
   },
 });
 
-export default function Login() {
+
+export default function Verify() {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
 
-  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const [codeDisabled, setCodeDisabled] = useState(true);
+  const [inputEmail, setInputEmail] = useState('');
+  const [verCode, setVerCode] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const data = new FormData(e.currentTarget);
+  const handleChange = (e) => {
+    setInputEmail(e.target.value);
+  }
 
-    let res = await fetch(`${BACKEND_URL}/api/login`, {
-      method: "POST",
+  const sendOtp = async (e) => {
+
+    if(inputEmail === undefined || inputEmail === '') {
+      alert('Please enter a valid email');
+      return;
+    }
+
+    let res = await fetch(`${BACKEND_URL}/api/sendmail`, {
+      method: 'POST',
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        email: data.get('email'),
-        password: data.get('password'),
+        email: inputEmail
       })
     });
 
     let response = await res.json();
 
-
     if (response.success) {
-      const user = {
-        name: response.name,
-        email: response.email,
-        token: response.jwtoken,
-        loggedIn: true,
-      };
-      localStorage.setItem('user', JSON.stringify(user));
+      alert('Code sent successfully');
+      setCodeDisabled(false);
+      setVerCode(response.verCode);
+    } else {
+      alert('Error while sending code!');
+    }
+
+  };
+
+  const handleSubmit = async (e) => {
+    const data = new FormData(e.currentTarget);
+    const vcode = data.get('vcode');
+
+    e.preventDefault();
+
+    if (verCode === undefined || verCode === '') {
+      alert('Please first generate the code!');
+      return;
+    }
+
+    if (verCode === vcode) {
+      alert('Verification successful.')
       e.target.reset();
       setTimeout(() => {
-        navigate('/');
-      }, 1000);
-
+        navigate('/signup', {
+          state: {
+            userEmail: data.get('email')
+          }
+        });
+      }, 500);
     } else {
-      alert('Login failed! Please try again.');
+      alert('Wrong code. Verification failed!');
     }
-  }
 
+  }
 
   return (
     <>
@@ -88,46 +108,41 @@ export default function Login() {
               borderRadius: 5,
             }}
           >
-            <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-              <LockOutlinedIcon />
-            </Avatar>
+            <ContactMailRoundedIcon sx={{ fontSize: 50 }} />
             <Typography component="h1" variant="h5">
-              Login
+              Kindly verify your Email first
             </Typography>
-            <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
+            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <TextField
                     required
                     fullWidth
+                    type='email'
                     id="email"
-                    label="Email Address"
+                    label="Email address"
                     name="email"
-                    autoComplete="email"
+                    onChange={handleChange}
                   />
                 </Grid>
                 <Grid item xs={12}>
+                  <Button
+                    onClick={sendOtp}
+                    variant="outlined"
+                    sx={{ float: 'right' }}
+                  >
+                    Send Verification code
+                  </Button>
+                </Grid>
+                <Grid item xs={12}>
                   <TextField
+                    disabled={codeDisabled}
                     required
                     fullWidth
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    id="password"
-                    autoComplete="new-password"
-                    label="Password"
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label="toggle password visibility"
-                            onClick={handleClickShowPassword}
-                            edge="end"
-                          >
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                          </IconButton>
-                        </InputAdornment>
-                      )
-                    }}
+                    type='number'
+                    id="vcode"
+                    label="Verification Code"
+                    name="vcode"
                   />
                 </Grid>
               </Grid>
@@ -135,14 +150,15 @@ export default function Login() {
                 type="submit"
                 fullWidth
                 variant="contained"
+                color='success'
                 sx={{ mt: 3, mb: 2 }}
               >
-                Login
+                Verify
               </Button>
               <Grid container justifyContent="flex-end">
                 <Grid item>
-                  <Link href="/register" variant="body2">
-                    Don't have an account? Register
+                  <Link href="/" variant="body2">
+                    Haven't recieved verfication code?
                   </Link>
                 </Grid>
               </Grid>
@@ -151,5 +167,5 @@ export default function Login() {
         </Container>
       </ThemeProvider>
     </>
-  );
+  )
 }

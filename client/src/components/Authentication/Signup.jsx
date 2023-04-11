@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Navbar from '../Navbar';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -32,6 +32,9 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPassword2, setShowPassword2] = useState(false);
 
+  const { state } = useLocation();
+  const { userEmail } = state;
+
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleClickShowPassword2 = () => setShowPassword2((show) => !show);
 
@@ -48,7 +51,7 @@ export default function Signup() {
         body: JSON.stringify({
           firstName: data.get('firstName'),
           lastName: data.get('lastName'),
-          email: data.get('email'),
+          email: userEmail,
           password: data.get('password'),
         })
       });
@@ -57,7 +60,6 @@ export default function Signup() {
       console.log(response);
 
       if (response.success) {
-        console.log("User Registered");
         alert("User successfully registered");
         e.target.reset();
         setTimeout(() => {
@@ -121,12 +123,12 @@ export default function Signup() {
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    required
+                    disabled
                     fullWidth
                     id="email"
-                    label="Email Address"
                     name="email"
                     autoComplete="email"
+                    value={userEmail}
                   />
                 </Grid>
                 <Grid item xs={12}>
