@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import jwt_decode from "jwt-decode";
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -20,6 +21,15 @@ const pages = [
 function Navbar() {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
+  const [userEmail, setUserEmail] = useState('');
+  const user = JSON.parse(localStorage.getItem('user'));
+
+  useEffect(() => {
+    if (user) {
+      const decodedJwt = jwt_decode(user.token);
+      setUserEmail(decodedJwt.email)
+    }
+  })
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -35,8 +45,6 @@ function Navbar() {
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
   };
-
-  const user = JSON.parse(localStorage.getItem('user'));
 
   function stringToColor(string) {
     let hash = 0;
@@ -157,7 +165,7 @@ function Navbar() {
             ))}
           </Box>
 
-          {/* For user profile and logout secction */}
+          {/* For user profile and logout section */}
           {
             user &&
             <Box sx={{ flexGrow: 0 }}>
@@ -183,7 +191,7 @@ function Navbar() {
                 onClose={handleCloseUserMenu}
               >
                 <MenuItem>
-                  <Typography textAlign="center">{user.email}</Typography>
+                  <Typography textAlign="center">{userEmail}</Typography>
                 </MenuItem>
                 <MenuItem onClick={handleCloseUserMenu}>
                   <Typography textAlign="center">My Account</Typography>

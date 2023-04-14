@@ -1,22 +1,22 @@
-const nodemailer = require("nodemailer");
+const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
-const user_email = process.env.MAIL_SENDER;
+const senderEmail = process.env.MAIL_SENDER;
 const password = process.env.MAIL_PASSWORD;
 
-async function sendmail(req, res) {
+async function sendOtp(req, res) {
 
     const { email } = req.body;
 
     const randomNum = Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
-    const verificationCode = String(randomNum).slice(-6);
+    const generatedOtp = String(randomNum).slice(-6);
 
     let transporter = nodemailer.createTransport({
         service: "Gmail",
         auth: {
-            user: user_email,
+            user: senderEmail,
             pass: password,
         },
     });
@@ -26,12 +26,11 @@ async function sendmail(req, res) {
             from: '"SecureMeet" <tprojects@gmail.com>',
             to: email,
             subject: "OTP for Email verification",
-            text: `Hello, your OTP for email verification is ${verificationCode}`,
+            html: `Hello, your OTP for email verification is <b>${generatedOtp}</b><br>` +
+                `OTP will expire in next 5 minutes.`,
         })
-        console.log("Message sent: %s", info.messageId);
         res.status(200).json({
             success: true,
-            verCode: verificationCode
         });
     } catch (err) {
         console.log("Error: %s", err);
@@ -40,22 +39,8 @@ async function sendmail(req, res) {
         });
     }
 
-    // let info = await transporter.sendMail({
-    //     from: '"SecureMeet" <tprojects@gmail.com>',
-    //     to: email,
-    //     subject: "OTP for Email verification",
-    //     text: `Hello, your OTP for email verification is ${verificationCode}`,
-    // }).then(() => {
-    //     console.log("Message sent: %s", info.messageId);
-    //     res.status(200).json({
-    //         success: true,
-    //         verCode: verificationCode
-    //     });
-    // }).catch(() => {
-    //     res.status(400);
-    // })
-
+    return { email, generatedOtp };
 }
 
 
-module.exports = sendmail;
+module.exports = sendOtp;

@@ -50,19 +50,16 @@ export default function Login() {
 
     let response = await res.json();
 
-
     if (response.success) {
       const user = {
         name: response.name,
-        email: response.email,
         token: response.jwtoken,
-        loggedIn: true,
       };
       localStorage.setItem('user', JSON.stringify(user));
       e.target.reset();
       setTimeout(() => {
         navigate('/');
-      }, 1000);
+      }, 500);
 
     } else {
       alert('Login failed! Please try again.');
@@ -94,7 +91,7 @@ export default function Login() {
             <Typography component="h1" variant="h5">
               Login
             </Typography>
-            <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
+            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <TextField

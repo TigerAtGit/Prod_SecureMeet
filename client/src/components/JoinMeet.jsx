@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import jwt_decode from "jwt-decode";
 import socket from '../socket';
 import Navbar from './Navbar';
 import Button from '@mui/material/Button';
@@ -27,40 +28,23 @@ export default function JoinMeet() {
 
   const roomRef = useRef();
   const userRef = useRef();
-  const [err, setErr] = useState(false);
   const [errMsg, setErrMsg] = useState('');
-
-  // useEffect(() => {
-  //   socket.on('FE-errorUserExists', ({ error }) => {
-  //     if (!error) {
-  //       const roomId = roomRef.current?.value;
-  //       const userName = userRef.current?.value;
-
-  //       if (!userName || !roomId) return;
-
-  //       localStorage.setItem('userName', userName);
-  //       localStorage.setItem('roomId', roomId);
-  //       // props.history.push(`/setupRoom`);
-  //       navigate('/setupRoom');
-  //     } else {
-  //       setErr(error);
-  //       setErrMsg('User already exists.');
-  //       console.log(`Some error occurred: ${errMsg}`);
-  //     }
-  //   });
-  // }, [props.history]);
 
 
   function joinRoom() {
     const roomId = roomRef.current.value;
     const userName = userRef.current.value;
 
+    const user = JSON.parse(localStorage.getItem('user'));
+    if(user) {
+      const decodedJwt = jwt_decode(user.token);
+    }
+
     if (!roomId || !userName) {
-      setErr(true);
       setErrMsg('Either room or userName is not defined');
       alert(`Something wrong: ${errMsg}`);
     } else {
-      socket.emit('BE-isIPblocked');
+      socket.emit('BE-isIPblocked', { userEmail: decodedJwt.email });
       socket.on('FE-errorIPblocked', ({ isIPblocked }) => {
         if (isIPblocked) {
           alert('Your IP has been blocked by the host!');
@@ -148,5 +132,3 @@ export default function JoinMeet() {
       </ThemeProvider></>
   )
 }
-
-/* Changed export method */

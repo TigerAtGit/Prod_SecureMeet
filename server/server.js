@@ -10,11 +10,12 @@ const Jwt = require('jsonwebtoken');
 const CryptoJS = require('crypto-js');
 const { body, validationResult } = require('express-validator');
 
-const sendmail = require('./controllers/mailController.js');
+const sendOtp = require('./controllers/mailController.js');
 
 dotenv.config();
 let socketList = {};
 let blockedIPs = {};
+let otpStore = {};
 
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 // app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
@@ -35,6 +36,57 @@ const io = require("socket.io")(server, {
 
 app.get('/', async (req, res) => {
     res.send(`Hello World! Your IP address: ${req.ip}`);
+});
+
+
+// API request to check if email already registered
+app.post('/api/checkEmail', async (req, res) => {
+    const { email } = req.body;
+    try {
+        let isEmailExists = await User.findOne({ email });
+        if (isEmailExists) {
+            res.status(200).json({
+                emailExists: true
+            })
+        }
+        else {
+            res.status(200).json({
+                emailExists: false
+            })
+        }
+    }
+    catch {
+        res.status(400).json({
+            err: 'Error connecting to database'
+        })
+    }
+})
+
+
+// API request to send an OTP
+app.post("/api/sendOtp", async (req, res) => {
+    const { email, generatedOtp } = await sendOtp(req, res);
+    otpStore[email] = generatedOtp;
+    setTimeout(() => {
+        delete otpStore[email];
+    }, 300000);
+});
+
+
+// API request to confirm the OTP
+app.post("/api/confirmOtp", async (req, res) => {
+    const { email, userEnteredOtp } = req.body;
+    const storedOtp = otpStore[email];
+
+    if (userEnteredOtp === storedOtp) {
+        res.status(200).json({
+            success: true
+        })
+    } else {
+        res.status(401).json({
+            success: false,
+        })
+    }
 });
 
 
@@ -68,7 +120,6 @@ app.post(
                 password,
                 process.env.CRYPTO_SECRET
             ).toString(),
-            // lastIp: req.ip
         });
 
         try {
@@ -80,9 +131,6 @@ app.post(
         }
     }
 );
-
-// API request to send an email
-app.post("/api/sendmail", sendmail);
 
 
 app.post(
@@ -103,14 +151,13 @@ app.post(
                         password: user.password,
                     },
                     process.env.JWT_SECRET,
-                    { expiresIn: "1d" }
+                    { expiresIn: "1m" }
                 );
                 res.status(200).json({
                     success: true,
+                    id: user._id,
                     jwtoken,
                     name: user.lastName !== "" ? user.firstName + " " + user.lastName : user.firstName,
-                    email: user.email,
-                    id: user._id,
                 });
             } else {
                 res.status(200).json({ success: false, error: "Invalid credentials" });
@@ -128,7 +175,10 @@ app.post(
     (req, res) => {
         const { ipAddr, userEmail } = req.body;
         blockedIPs[ipAddr] = userEmail;
-        console.log(`Host requested to block IP: ${ipAddr}`);
+        setTimeout(() => {
+            delete blockedIPs[ipAddr];
+        }, 7200000);
+        // console.log(`Host requested to block IP: ${ipAddr}`);
         console.log(blockedIPs);
         res.status(200).json({
             success: true,
@@ -157,10 +207,10 @@ app.post(
     "/api/scanUrl",
     async (req, res) => {
         const { url } = req.body;
-        const ipInfoResponse = await fetch(
+        const urlScanResponse = await fetch(
             `https://ipqualityscore.com/api/json/url/${IPQUALITYSCORE_TOKEN}/${url}`
         );
-        const data = await ipInfoResponse.json();
+        const data = await urlScanResponse.json();
         res.status(200).json({
             success: true,
             data: data
@@ -194,11 +244,11 @@ io.on('connection', (socket) => {
     });
 
     // To check if IP of user is blocked
-    socket.on('BE-isIPblocked', () => {
+    socket.on('BE-isIPblocked', ({ userEmail }) => {
         const userIp = socket.handshake.headers['x-forwarded-for'] ?
             socket.handshake.headers['x-forwarded-for'].split(',')[0] : socket.handshake.address;
         let isIPblocked = false;
-        if (userIp in blockedIPs) {
+        if (userIp in blockedIPs && blockedIPs[userIp] === userEmail) {
             isIPblocked = true;
         }
         socket.emit('FE-errorIPblocked', { isIPblocked });
@@ -256,7 +306,6 @@ io.on('connection', (socket) => {
                 userId: client.id, info: socketList[client.id]
             });
         });
-        // io.in(roomId).emit('FE-userJoin', users);
         socket.to(roomId).emit('FE-userJoin', usersInRoom);
     });
 
