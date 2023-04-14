@@ -31,18 +31,18 @@ export default function JoinMeet() {
   const [errMsg, setErrMsg] = useState('');
   const [userEmail, setUserEmail] = useState('');
 
+  const user = JSON.parse(localStorage.getItem('user'));
+  useEffect(() => {
+    if (user) {
+      const decodedJwt = jwt_decode(user.token);
+      setUserEmail(decodedJwt.email)
+    }
+  })
 
   function joinRoom() {
     const roomId = roomRef.current.value;
     const userName = userRef.current.value;
 
-    const user = JSON.parse(localStorage.getItem('user'));
-    useEffect(() => {
-      if (user) {
-        const decodedJwt = jwt_decode(user.token);
-        setUserEmail(decodedJwt.email)
-      }
-    })
 
     if (!roomId || !userName) {
       setErrMsg('Either room or userName is not defined');
