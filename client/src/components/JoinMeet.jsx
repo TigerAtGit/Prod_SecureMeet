@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import jwt_decode from "jwt-decode";
 import socket from '../socket';
 import Navbar from './Navbar';
@@ -29,6 +29,7 @@ export default function JoinMeet() {
   const roomRef = useRef();
   const userRef = useRef();
   const [errMsg, setErrMsg] = useState('');
+  const [userEmail, setUserEmail] = useState('');
 
 
   function joinRoom() {
@@ -36,15 +37,18 @@ export default function JoinMeet() {
     const userName = userRef.current.value;
 
     const user = JSON.parse(localStorage.getItem('user'));
-    if(user) {
-      const decodedJwt = jwt_decode(user.token);
-    }
+    useEffect(() => {
+      if (user) {
+        const decodedJwt = jwt_decode(user.token);
+        setUserEmail(decodedJwt.email)
+      }
+    })
 
     if (!roomId || !userName) {
       setErrMsg('Either room or userName is not defined');
       alert(`Something wrong: ${errMsg}`);
     } else {
-      socket.emit('BE-isIPblocked', { userEmail: decodedJwt.email });
+      socket.emit('BE-isIPblocked', { userEmail: userEmail });
       socket.on('FE-errorIPblocked', ({ isIPblocked }) => {
         if (isIPblocked) {
           alert('Your IP has been blocked by the host!');
