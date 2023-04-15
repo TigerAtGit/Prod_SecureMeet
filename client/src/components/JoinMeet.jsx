@@ -43,7 +43,6 @@ export default function JoinMeet() {
     const roomId = roomRef.current.value;
     const userName = userRef.current.value;
 
-
     if (!roomId || !userName) {
       setErrMsg('Either room or userName is not defined');
       alert(`Something wrong: ${errMsg}`);
@@ -59,6 +58,7 @@ export default function JoinMeet() {
             state: {
               isHost: false,
               userName: userName,
+              userEmail: userEmail,
               roomId: roomId
             }
           });

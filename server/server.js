@@ -14,8 +14,8 @@ const sendOtp = require('./controllers/mailController.js');
 
 dotenv.config();
 let socketList = {};
-let blockedIPs = {};
-let otpStore = {};
+let blockedIPs = {}; // Temporary storage for Blocked IPs 
+let otpStore = {}; // Temporary storage for OTPs 
 
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 // app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
@@ -151,7 +151,7 @@ app.post(
                         password: user.password,
                     },
                     process.env.JWT_SECRET,
-                    { expiresIn: "1m" }
+                    { expiresIn: "6h" }
                 );
                 res.status(200).json({
                     success: true,
@@ -174,7 +174,10 @@ app.post(
     "/api/blockIP",
     (req, res) => {
         const { ipAddr, userEmail } = req.body;
-        blockedIPs[ipAddr] = userEmail;
+        if(!(ipAddr in blockedIPs)) {
+            blockedIPs[ipAddr] = [];
+        }
+        blockedIPs[ipAddr].push(userEmail);
         setTimeout(() => {
             delete blockedIPs[ipAddr];
         }, 7200000);
@@ -248,7 +251,7 @@ io.on('connection', (socket) => {
         const userIp = socket.handshake.headers['x-forwarded-for'] ?
             socket.handshake.headers['x-forwarded-for'].split(',')[0] : socket.handshake.address;
         let isIPblocked = false;
-        if (userIp in blockedIPs && blockedIPs[userIp] === userEmail) {
+        if (userIp in blockedIPs && blockedIPs[userIp].includes(userEmail)) {
             isIPblocked = true;
         }
         socket.emit('FE-errorIPblocked', { isIPblocked });

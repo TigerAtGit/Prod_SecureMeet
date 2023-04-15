@@ -29,11 +29,9 @@ export default function SetupRoom() {
   const navigate = useNavigate();
 
   const { state } = useLocation();
-  const { isHost, userName, roomId } = state;
+  const { isHost, userName, userEmail, roomId } = state;
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [videoEnabled, setVideoEnabled] = useState(true);
-  // const username = localStorage.getItem('userName');
-  // const roomId = localStorage.getItem('roomId');
 
   function joinMeet() {
     localStorage.setItem("audio", audioEnabled);
@@ -41,7 +39,8 @@ export default function SetupRoom() {
     navigate(`/meetingRoom/${roomId}`, {
       state: {
         isHost: isHost,
-        userName: userName
+        userName: userName,
+        userEmail: userEmail
       }
     });
   }

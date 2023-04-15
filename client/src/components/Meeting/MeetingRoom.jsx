@@ -64,9 +64,8 @@ export default function MeetingRoom() {
 
   const { roomId } = useParams();
   const { state } = useLocation();
-  const { isHost, userName } = state;
+  const { isHost, userName, userEmail } = state;
   const currentUser = userName; //localStorage.getItem('userName');
-  const userEmail = JSON.parse(localStorage.getItem('user')).email;
   const userFullName = JSON.parse(localStorage.getItem('user')).name;
 
   const [peers, setPeers] = useState([]);

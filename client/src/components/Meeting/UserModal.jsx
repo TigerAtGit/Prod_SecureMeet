@@ -6,6 +6,7 @@ import Modal from '@mui/material/Modal';
 import Button from '@mui/material/Button';
 import { BACKEND_URL } from '../../constants';
 import TextField from '@mui/material/TextField';
+import CircularProgress from '@mui/material/CircularProgress';
 
 
 const style = {
@@ -25,9 +26,11 @@ const style = {
 export default function UserModal({ open, handleClose, userInfo, userId, removeParticipant }) {
 
   const [ipDetails, setIpDetails] = useState(null);
+  const [ipInfoLoading, setIpInfoLoading] = useState(false);
 
   const getIpDetails = async (ipAddr) => {
-    
+    setIpInfoLoading(true);
+
     let res = await fetch(`${BACKEND_URL}/api/ipInfo`, {
       method: "POST",
       headers: {
@@ -39,6 +42,7 @@ export default function UserModal({ open, handleClose, userInfo, userId, removeP
     });
 
     let response = await res.json();
+    setIpInfoLoading(false);
 
     if (response.success) {
       let trimmedDetails = JSON.stringify(response.data, null, 2);
@@ -103,7 +107,14 @@ export default function UserModal({ open, handleClose, userInfo, userId, removeP
             marginTop: 2,
             marginRight: 2
           }}>
-          Get IP details
+          {ipInfoLoading && <CircularProgress size={20} sx={{ position: 'absolute', zIndex: 1 }} />}
+          <span
+            style={{
+              opacity: ipInfoLoading ? 0.5 : 1,
+            }}
+          >
+            Get IP details
+          </span>
         </Button>
 
         <Button variant="contained" color="error"

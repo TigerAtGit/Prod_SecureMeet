@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import socket from '../../socket';
 import Drawer from '@mui/material/Drawer';
 import Divider from '@mui/material/Divider';
@@ -10,8 +11,9 @@ import validator from 'validator';
 import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
 import TravelExploreRoundedIcon from '@mui/icons-material/TravelExploreRounded';
+import CircularProgress from '@mui/material/CircularProgress';
 import { BACKEND_URL } from '../../constants';
-// import { FLASK_URL } from '../../constants';
+import UrlModal from './UrlModal';
 
 
 const drawerWidth = 300;
@@ -20,7 +22,8 @@ export default function Chat({ roomId, open, thisUser }) {
 
   const [msg, setMsg] = useState([]);
   const inputRef = useRef();
-  // const [urlScanResult, setUrlScanResult] = useState(null);
+  const [urlScanResult, setUrlScanResult] = useState(null);
+  const [resultLoading, setResultLoading] = useState(false);
 
   useEffect(() => {
     socket.on('FE-receiveMessage', ({ msg, sender }) => {
@@ -31,8 +34,11 @@ export default function Chat({ roomId, open, thisUser }) {
     })
   }, []);
 
-  const scanUrl = async (url) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const handleClose = () => setModalOpen(false);
 
+  const openUrlModal = async (url) => {
+    setResultLoading(true);
     let res = await fetch(`${BACKEND_URL}/api/scanUrl`, {
       method: "POST",
       headers: {
@@ -44,31 +50,21 @@ export default function Chat({ roomId, open, thisUser }) {
     });
 
     let response = await res.json();
+    setResultLoading(false);
 
     if (response.success) {
       let trimmedDetails = JSON.stringify(response.data, null, 2);
-      console.log(trimmedDetails);
-      // setUrlScanResult(trimmedDetails);
+      setUrlScanResult(trimmedDetails);
     } else {
-      alert('Failed to scan URL! Please try again.');
+      setUrlScanResult('Failed to scan URL! Please try again.');
     }
-
+    setModalOpen(true);
   }
+
 
   async function sendMessage(e) {
     if (e.key === 'Enter') {
       const message = e.target.value;
-
-      // let res = await fetch(`${FLASK_URL}/chat`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(message)
-      // });
-
-      // let messageResponse = await res.json();
-      // let statusCode = res.status;
 
       if (message) {
         socket.emit('BE-sendMessage', { roomId, msg: message, sender: thisUser });
@@ -127,12 +123,15 @@ export default function Chat({ roomId, open, thisUser }) {
                           {msg}
                         </Link>
                         <Tooltip title='Check for malicious URL'>
+                          {
+                            resultLoading ? <CircularProgress size={20} sx={{ float: 'right' }}/> : 
                           <TravelExploreRoundedIcon
-                            onClick={() => scanUrl(msg)}
+                            onClick={() => openUrlModal(msg)}
                             sx={{
                               float: 'right',
                               cursor: 'pointer',
                             }} />
+                          }
                         </Tooltip>
                       </>
                       : <Typography variant='p'>
@@ -155,6 +154,14 @@ export default function Chat({ roomId, open, thisUser }) {
             width: '100%',
           }} />
       </Drawer>
+
+      {modalOpen && createPortal(
+        <UrlModal
+          open={modalOpen}
+          handleClose={handleClose}
+          urlScanResult={urlScanResult}/>,
+        document.body
+      )}
     </>
   )
 }

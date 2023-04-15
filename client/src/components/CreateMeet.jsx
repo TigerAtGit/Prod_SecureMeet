@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import jwt_decode from "jwt-decode";
 import Navbar from './Navbar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -29,6 +30,15 @@ export default function CreateMeet() {
   const roomRef = useRef();
   const userRef = useRef();
   const [roomLabel, setRoomLabel] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+
+  const user = JSON.parse(localStorage.getItem('user'));
+  useEffect(() => {
+    if (user) {
+      const decodedJwt = jwt_decode(user.token);
+      setUserEmail(decodedJwt.email)
+    }
+  })
 
   function generateRoomId() {
     const min = 111, max = 999;
@@ -43,12 +53,11 @@ export default function CreateMeet() {
     if (!roomId || !userName) {
       alert(`Something went wrong!`);
     } else {
-      // localStorage.setItem('userName', userName);
-      // localStorage.setItem('roomId', roomId);
       navigate('/setupRoom', {
         state: {
           isHost: true,
           userName: userName,
+          userEmail: userEmail,
           roomId: roomId
         }
       });
