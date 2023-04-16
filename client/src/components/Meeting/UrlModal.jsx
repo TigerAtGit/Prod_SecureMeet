@@ -27,16 +27,19 @@ export default function UrlModal({ open, handleClose, urlScanResult }) {
     adult: true, risk_score: true, country_code: true
   };
 
-  const parsedJson = JSON.parse(urlScanResult);
   let scanResultValue = '';
-
-  for (const [name, value] of Object.entries(parsedJson)) {
-    if (fieldNames[name]) {
-      const formattedName = name.split('_').map(
-        word => word.charAt(0).toUpperCase() + word.slice(1)
-      ).join(' ');
-      scanResultValue += `${formattedName}: ${value}\n`;
+  try{
+    const parsedJson = JSON.parse(urlScanResult);
+    for (const [name, value] of Object.entries(parsedJson)) {
+      if (fieldNames[name]) {
+        const formattedName = name.split('_').map(
+          word => word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+        scanResultValue += `${formattedName}: ${value}\n`;
+      }
     }
+  } catch {
+    scanResultValue = urlScanResult;
   }
 
   return (

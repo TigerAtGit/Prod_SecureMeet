@@ -196,11 +196,17 @@ app.post(
     async (req, res) => {
         const { ipAddr } = req.body;
         const ipInfoResponse = await fetch(`https://ipinfo.io/${ipAddr}?token=${IP_INFO_TOKEN}`);
-        const data = await ipInfoResponse.json();
-        res.status(200).json({
-            success: true,
-            data: data
-        });
+        if(ipInfoResponse.status === 200) {
+            const data = await ipInfoResponse.json();
+            res.status(200).json({
+                success: true,
+                data: data
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+            })
+        }
     }
 );
 
@@ -213,11 +219,17 @@ app.post(
         const urlScanResponse = await fetch(
             `https://ipqualityscore.com/api/json/url/${IPQUALITYSCORE_TOKEN}/${url}`
         );
-        const data = await urlScanResponse.json();
-        res.status(200).json({
-            success: true,
-            data: data
-        });
+        if(urlScanResponse.status === 200) {
+            const data = await urlScanResponse.json();
+            res.status(200).json({
+                success: true,
+                data: data
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+            })
+        }
     }
 );
 

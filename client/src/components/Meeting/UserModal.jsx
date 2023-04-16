@@ -25,12 +25,12 @@ const style = {
 
 export default function UserModal({ open, handleClose, userInfo, userId, removeParticipant }) {
 
-  const [ipDetails, setIpDetails] = useState(null);
   const [ipInfoLoading, setIpInfoLoading] = useState(false);
-
+  const [ipInfoValue, setIpInfoValue] = useState(null);
+  
   const getIpDetails = async (ipAddr) => {
     setIpInfoLoading(true);
-
+    
     let res = await fetch(`${BACKEND_URL}/api/ipInfo`, {
       method: "POST",
       headers: {
@@ -46,7 +46,17 @@ export default function UserModal({ open, handleClose, userInfo, userId, removeP
 
     if (response.success) {
       let trimmedDetails = JSON.stringify(response.data, null, 2);
-      setIpDetails(trimmedDetails);
+      try {
+        let formattedIpInfo = '';
+        const parsedJson = JSON.parse(trimmedDetails);
+        for (const [name, value] of Object.entries(parsedJson)) {
+          const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+          formattedIpInfo += `${formattedName}: ${value}\n`;
+        }
+        setIpInfoValue(formattedIpInfo.trim());
+      } catch {
+        setIpInfoValue('Failed to get IP details! Please try again.');
+      }
     } else {
       alert('Failed to get IP details! Please try again.');
     }
@@ -70,7 +80,7 @@ export default function UserModal({ open, handleClose, userInfo, userId, removeP
 
     if (response.success) {
       alert(`IP address blocked`);
-      // removeParticipant(userId, username);
+      removeParticipant(userId, username);
     } else {
       alert('Operation failed! Please try again.');
     }
@@ -97,8 +107,8 @@ export default function UserModal({ open, handleClose, userInfo, userId, removeP
           <b>IP address:</b> {userInfo.ipAddr}
         </div>
 
-        {ipDetails &&
-          <TextField fullWidth multiline rows={4} value={ipDetails} />
+        {ipInfoValue &&
+          <TextField fullWidth multiline rows={4} value={ipInfoValue} />
         }
 
         <Button variant="contained" color="secondary"
