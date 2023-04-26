@@ -1,4 +1,5 @@
-const app = require('express')();
+const express = require('express');
+const app = express();
 const server = require('http').createServer(app);
 const fetch = require('node-fetch');
 const bodyParser = require('body-parser');
@@ -9,6 +10,9 @@ const User = require('./models/User.js');
 const Jwt = require('jsonwebtoken');
 const CryptoJS = require('crypto-js');
 const { body, validationResult } = require('express-validator');
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
 const sendOtp = require('./controllers/mailController.js');
 
@@ -17,7 +21,10 @@ let socketList = {};
 let blockedIPs = {}; // Temporary storage for Blocked IPs 
 let otpStore = {}; // Temporary storage for OTPs 
 
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
+app.use('/uploads', express.static(UPLOADS_DIR));
 // app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors());
 
@@ -30,7 +37,8 @@ const io = require("socket.io")(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"],
-    }
+    },
+    maxHttpBufferSize: 1e8
 });
 
 
@@ -174,7 +182,7 @@ app.post(
     "/api/blockIP",
     (req, res) => {
         const { ipAddr, userEmail } = req.body;
-        if(!(ipAddr in blockedIPs)) {
+        if (!(ipAddr in blockedIPs)) {
             blockedIPs[ipAddr] = [];
         }
         blockedIPs[ipAddr].push(userEmail);
@@ -196,7 +204,7 @@ app.post(
     async (req, res) => {
         const { ipAddr } = req.body;
         const ipInfoResponse = await fetch(`https://ipinfo.io/${ipAddr}?token=${IP_INFO_TOKEN}`);
-        if(ipInfoResponse.status === 200) {
+        if (ipInfoResponse.status === 200) {
             const data = await ipInfoResponse.json();
             res.status(200).json({
                 success: true,
@@ -219,7 +227,7 @@ app.post(
         const urlScanResponse = await fetch(
             `https://ipqualityscore.com/api/json/url/${IPQUALITYSCORE_TOKEN}/${url}`
         );
-        if(urlScanResponse.status === 200) {
+        if (urlScanResponse.status === 200) {
             const data = await urlScanResponse.json();
             res.status(200).json({
                 success: true,
@@ -341,6 +349,31 @@ io.on('connection', (socket) => {
     socket.on("BE-sendMessage", ({ roomId, msg, sender }) => {
         io.in(roomId).emit("FE-receiveMessage", { msg, sender });
     });
+
+    socket.on('BE-sendFile', ({ roomId, fileData, sender }) => {
+        const uniqName = uuidv4().substring(0, 8) + '_' + fileData.name;
+        if (!fs.existsSync(UPLOADS_DIR)) {
+            fs.mkdirSync(UPLOADS_DIR);
+        }
+        fs.writeFile(`uploads/${uniqName}`, fileData.data, 'binary', function (err) {
+            if (err) {
+                io.in(roomId).emit('FE-sendFileError');
+            }
+
+            io.in(roomId).emit('FE-receiveFile', {
+                name: fileData.name,
+                url: uniqName,
+                sender
+            });
+
+            // delete file after specified time (1h)
+            setTimeout(() => {
+                fs.unlink(`uploads/${uniqName}`, function (err) {
+                    if (err) throw err;
+                })
+            }, 3600000);
+        });
+    })
 
     socket.on("BE-toggleCameraAudio", ({ roomId, switchTarget }) => {
         if (switchTarget === "video") {

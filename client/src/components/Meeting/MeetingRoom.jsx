@@ -421,7 +421,8 @@ export default function MeetingRoom() {
                 maxHeight: '40vh',
                 maxWidth: '50vw',
                 border: '2px solid white',
-                borderRadius: 5
+                borderRadius: 5,
+                transform: 'scaleX(-1)',
               }}
             >
             </video>
