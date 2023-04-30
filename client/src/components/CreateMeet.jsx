@@ -51,7 +51,7 @@ export default function CreateMeet() {
     const userName = userRef.current.value;
 
     if (!roomId || !userName) {
-      alert(`Something went wrong!`);
+      alert(`Please enter username and generate meeting Id!`);
     } else {
       navigate('/setupRoom', {
         state: {

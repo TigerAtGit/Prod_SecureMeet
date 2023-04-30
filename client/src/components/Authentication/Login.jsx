@@ -62,7 +62,7 @@ export default function Login() {
       }, 500);
 
     } else {
-      alert('Login failed! Please try again.');
+      alert(`Login failed: ${response.error}\nPlease try again.`);
     }
   }
 

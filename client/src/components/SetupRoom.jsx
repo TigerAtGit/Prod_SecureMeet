@@ -30,8 +30,8 @@ export default function SetupRoom() {
 
   const { state } = useLocation();
   const { isHost, userName, userEmail, roomId } = state;
-  const [audioEnabled, setAudioEnabled] = useState(true);
-  const [videoEnabled, setVideoEnabled] = useState(true);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [videoEnabled, setVideoEnabled] = useState(false);
 
   function joinMeet() {
     localStorage.setItem("audio", audioEnabled);

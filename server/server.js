@@ -224,8 +224,9 @@ app.post(
     "/api/scanUrl",
     async (req, res) => {
         const { url } = req.body;
+        const enocodedUrl = encodeURIComponent(url);
         const urlScanResponse = await fetch(
-            `https://ipqualityscore.com/api/json/url/${IPQUALITYSCORE_TOKEN}/${url}`
+            `https://ipqualityscore.com/api/json/url/${IPQUALITYSCORE_TOKEN}/${enocodedUrl}`
         );
         if (urlScanResponse.status === 200) {
             const data = await urlScanResponse.json();
@@ -306,6 +307,10 @@ io.on('connection', (socket) => {
     });
 
     // Join Room
+    socket.on('BE-checkRoom', async ({ roomId }) => {
+        const roomExists = io.sockets.adapter.rooms.has(roomId);
+        socket.emit('FE-roomFound', { roomExists });
+    });
     socket.on('BE-joinRoom', async ({ roomId, userName, userFullName, userEmail, video, audio }) => {
         socket.join(roomId);
         const userIp = socket.handshake.headers['x-forwarded-for'] ?

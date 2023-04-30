@@ -57,7 +57,6 @@ export default function Signup() {
       });
 
       let response = await res.json();
-      console.log(response);
 
       if (response.success) {
         alert("User successfully registered");
@@ -66,7 +65,11 @@ export default function Signup() {
           navigate('/');
         }, 1000);
       } else {
-        alert('Error while registering!');
+        const errors = [];
+        response.errors.forEach((err) => {
+          errors.push(err.msg);
+        })
+        alert('Error while registering!\n-' + errors.join('\n-'));
       }
 
     } else {

@@ -166,6 +166,7 @@ export default function Chat({ roomId, open, thisUser }) {
                       marginLeft: 1,
                       backgroundColor: '#D3D3D3',
                       borderRadius: 2,
+                      overflowWrap: 'break-word'
                     }}>
                     <Typography variant='p' fontWeight={'600'} display={'block'}>
                       {sender === thisUser ? 'Me' : sender}
@@ -188,7 +189,7 @@ export default function Chat({ roomId, open, thisUser }) {
                       </>
                       : validator.isURL(msg) ?
                         <>
-                          <Link href={msg} >
+                          <Link href={msg} target='_blank' rel='noreferrer' >
                             {msg}
                           </Link>
                           <Tooltip title='Check for malicious URL'>

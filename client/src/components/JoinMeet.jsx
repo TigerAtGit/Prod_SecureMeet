@@ -28,7 +28,6 @@ export default function JoinMeet() {
 
   const roomRef = useRef();
   const userRef = useRef();
-  const [errMsg, setErrMsg] = useState('');
   const [userEmail, setUserEmail] = useState('');
 
   const user = JSON.parse(localStorage.getItem('user'));
@@ -44,26 +43,34 @@ export default function JoinMeet() {
     const userName = userRef.current.value;
 
     if (!roomId || !userName) {
-      setErrMsg('Either room or userName is not defined');
-      alert(`Something wrong: ${errMsg}`);
-    } else {
-      socket.emit('BE-isIPblocked', { userEmail: userEmail });
-      socket.on('FE-errorIPblocked', ({ isIPblocked }) => {
-        if (isIPblocked) {
-          alert('Your IP has been blocked by the host!');
+      alert(`Please enter username and room ID to proceed!`);
+    }
+    else {
+      socket.emit('BE-checkRoom', { roomId });
+      socket.once('FE-roomFound', ({ roomExists }) => {
+        if (roomExists) {
+          socket.emit('BE-isIPblocked', { userEmail: userEmail });
+          socket.once('FE-errorIPblocked', ({ isIPblocked }) => {
+            if (isIPblocked) {
+              alert('Your IP has been blocked by the host!');
+              return;
+            }
+            else {
+              navigate('/setupRoom', {
+                state: {
+                  isHost: false,
+                  userName: userName,
+                  userEmail: userEmail,
+                  roomId: roomId
+                }
+              });
+            }
+          })
+        } else {
+          alert('Meeting ID does not exists!');
           return;
         }
-        else {
-          navigate('/setupRoom', {
-            state: {
-              isHost: false,
-              userName: userName,
-              userEmail: userEmail,
-              roomId: roomId
-            }
-          });
-        }
-      })
+      });
     }
   }
 
@@ -89,7 +96,7 @@ export default function JoinMeet() {
               Join a Meet
             </Typography>
             <VideoCameraFrontIcon fontSize='large' />
-            <Box component="form" noValidate sx={{ mt: 3 }}>
+            <Box component="form" sx={{ mt: 3 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <TextField
