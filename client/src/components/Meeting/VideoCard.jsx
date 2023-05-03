@@ -14,12 +14,13 @@ const VideoCard = (props) => {
     <video
       autoPlay
       playsInline
+      height='100%'
+      width='100%'
       ref={videoRef}
       style={{
-        maxHeight: '40vh',
-        maxWidth: '50vw',
         border: '2px solid white',
-        borderRadius: 5
+        borderRadius: 5,
+        transform: 'scaleX(-1)',
       }}
     >
     </video>

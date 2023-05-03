@@ -8,6 +8,7 @@ import Chat from './Chat';
 import Participants from './Participants';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Container from '@mui/system/Container';
+import Box from '@mui/material/Box';
 import { CssBaseline } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { styled } from '@mui/system';
@@ -64,15 +65,15 @@ export default function MeetingRoom() {
 
   const { roomId } = useParams();
   const { state } = useLocation();
-  const { isHost, userName, userEmail } = state;
-  const currentUser = userName; //localStorage.getItem('userName');
+  const { isHost, userName, userEmail, audioEnabled, videoEnabled } = state;
+  const currentUser = userName;
   const userFullName = JSON.parse(localStorage.getItem('user')).name;
 
   const [peers, setPeers] = useState([]);
   const [userAV, setUserAV] = useState({
     localUser: {
-      video: localStorage.getItem('video') === 'true' ? true : false,
-      audio: localStorage.getItem('audio') === 'true' ? true : false,
+      video: videoEnabled,
+      audio: audioEnabled,
     },
   });
 
@@ -82,11 +83,11 @@ export default function MeetingRoom() {
   const userStream = useRef();
 
   useEffect(() => {
-    // connect camera and mic 
+    // connect camera and mic, and setting stream 
     navigator.mediaDevices.getUserMedia({
       video: true, audio: true
     }).then((stream) => {
-
+      // setStream(currentStream);
       userVideoRef.current.srcObject = stream;
       userVideoRef.current.srcObject
         .getVideoTracks()[0].enabled = userAV.localUser.video;
@@ -94,6 +95,7 @@ export default function MeetingRoom() {
         .getAudioTracks()[0].enabled = userAV.localUser.audio;
       userStream.current = stream;
 
+      // Emitting create room and join room events
       isHost ? socket.emit('BE-createRoom', {
         roomId: roomId,
         userName: currentUser,
@@ -127,12 +129,10 @@ export default function MeetingRoom() {
             });
             peerList.push(peer);
 
-            setUserAV((preList) => {
-              return {
-                ...preList,
-                [peer.userName]: { video, audio },
-              };
-            });
+            setUserAV((prevUserAV) => ({
+              ...prevUserAV,
+              [peer.userName]: { video, audio },
+            }));
           }
         });
 
@@ -157,51 +157,48 @@ export default function MeetingRoom() {
             return [...users, peer];
           });
 
-          setUserAV((preList) => {
-            return {
-              ...preList,
-              [peer.userName]: { video, audio }
-            };
-          });
+          setUserAV((prevUserAV) => ({
+            ...prevUserAV,
+            [peer.userName]: { video, audio },
+          }));
         }
       });
-
-      socket.on('FE-callAccepted', ({ signal, answerId }) => {
-        const peerIdx = findPeer(answerId);
-        peerIdx.peer.signal(signal);
-      });
-
-      socket.on('FE-userLeave', ({ userId, leaver }) => {
-        const peerIdx = findPeer(userId);
-        peerIdx.peer.destroy();
-        setPeers((users) => {
-          users = users.filter((user) => user.peerId !== peerIdx.peer.peerId);
-          return [...users];
-        });
-        peersRef.current = peersRef.current.filter(
-          ({ peerId }) => peerId !== userId
-        );
-      });
-
-      socket.on('FE-userRemoved', ({ userId, userName }) => {
-        const peerIdx = findPeer(userId);
-        peerIdx.peer.destroy();
-        setPeers((users) => {
-          users = users.filter((user) => user.peerId !== peerIdx.peer.peerId);
-          return [...users];
-        });
-        peersRef.current = peersRef.current.filter(
-          ({ peerId }) => peerId !== userId
-        );
-        alert(`${userName} has been removed from the meeting.`);
-      });
-
-      socket.on('FE-youRemoved', () => {
-        alert('You have been removed from the meeting!');
-        window.location.href = '/';
-      })
-
     });
+
+    socket.on('FE-callAccepted', ({ signal, answerId }) => {
+      const peerIdx = findPeer(answerId);
+      peerIdx.peer.signal(signal);
+    });
+
+    socket.on('FE-userLeave', ({ userId, leaver }) => {
+      const peerIdx = findPeer(userId);
+      peerIdx.peer.destroy();
+      setPeers((users) => {
+        users = users.filter((user) => user.peerId !== peerIdx.peer.peerId);
+        return [...users];
+      });
+      peersRef.current = peersRef.current.filter(
+        ({ peerId }) => peerId !== userId
+      );
+    });
+
+    socket.on('FE-userRemoved', ({ userId, userName }) => {
+      const peerIdx = findPeer(userId);
+      peerIdx.peer.destroy();
+      setPeers((users) => {
+        users = users.filter((user) => user.peerId !== peerIdx.peer.peerId);
+        return [...users];
+      });
+      peersRef.current = peersRef.current.filter(
+        ({ peerId }) => peerId !== userId
+      );
+      alert(`${userName} has been removed from the meeting.`);
+    });
+
+    socket.on('FE-youRemoved', () => {
+      alert('You have been removed from the meeting!');
+      window.location.href = '/';
+    })
 
     socket.on('FE-toggleCamera', ({ userId, switchTarget }) => {
       const peerIdx = findPeer(userId);
@@ -226,12 +223,6 @@ export default function MeetingRoom() {
 
   }, []);
 
-  // const getIpAddress = async() => {
-  //   const ip_response = await fetch("http://checkip.amazonaws.com");
-  //   let myIPaddr = await ip_response.data;
-  //   console.log(myIPaddr);
-  //   setClientIpAddress(myIPaddr);
-  // }
 
   function createPeer(userId, caller, stream) {
     const peer = new Peer({
@@ -397,42 +388,56 @@ export default function MeetingRoom() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Container component="main" maxWidth="s"
+      <Container component="main"
         sx={{
-          marginTop: '15vh',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
         }}>
         <CssBaseline />
-        <Grid container spacing={{ xs: 1, md: 2 }}
-          direction="row"
-          justifyContent="space-evenly"
-          alignItems="center">
-          <Grid item xs={6} md={4}
-            sx={{ position: 'relative' }}>
-            <DisplayName>{currentUser}</DisplayName>
-            <video
-              autoPlay
-              playsInline
-              muted
-              ref={userVideoRef}
-              style={{
-                maxHeight: '40vh',
-                maxWidth: '50vw',
-                border: '2px solid white',
-                borderRadius: 5,
-                transform: 'scaleX(-1)',
-              }}
-            >
-            </video>
+        <Box fullwidth sx={{
+          marginTop: '5vh',
+          maxHeight: '75vh',
+          overflowY: 'scroll',
+          "&::-webkit-scrollbar": {
+            display: "none"
+          }
+        }}>
+          <Grid container spacing={{ xs: 1, md: 2 }}
+            direction="row"
+            justifyContent="space-evenly"
+            alignItems="center">
+            <Grid item xs={12} md={4}
+              sx={{
+                position: 'relative',
+                minHeight: '20vh',
+                minWidth: '20vw'
+              }}>
+              <DisplayName>{currentUser}</DisplayName>
+              <video
+                autoPlay
+                playsInline
+                muted
+                height='100%'
+                width='100%'
+                ref={userVideoRef}
+                style={{
+                  border: '2px solid white',
+                  borderRadius: 5,
+                  transform: 'scaleX(-1)',
+                }}
+              >
+              </video>
+            </Grid>
+
+            {peers && peers.map((peer, index, arr) =>
+              createUserVideo(peer, index, arr))
+            }
           </Grid>
-          {peers && peers.map((peer, index, arr) =>
-            createUserVideo(peer, index, arr))}
-        </Grid>
-        
+        </Box>
+
         <Typography variant='h5' sx={{
-          marginTop: "70vh",
+          marginTop: "85vh",
           position: "absolute",
           left: '5vw',
           color: 'white',

@@ -30,7 +30,7 @@ export default function BottomBar({
   participantsOpen
 }) {
   return (
-      <Stack direction="row" marginTop="70vh" position="absolute" spacing={1} sx={{
+      <Stack direction="row" marginTop="85vh" position="absolute" spacing={1} sx={{
         backgroundColor: 'black',
         padding: 2,
         borderRadius: 2

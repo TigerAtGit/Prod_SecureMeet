@@ -256,7 +256,7 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
 // Socket code
 io.on('connection', (socket) => {
 
-    console.log(`New user connected: ${socket.id}`);
+    // console.log(`New user connected: ${socket.id}`);
 
     socket.on('disconnect', () => {
         var leavingSocket = socket.id;
@@ -264,7 +264,7 @@ io.on('connection', (socket) => {
             delete socketList[leavingSocket];
         }
         socket.disconnect();
-        console.log(`User disconnected: ${leavingSocket}`);
+        // console.log(`User disconnected: ${leavingSocket}`);
     });
 
     // To check if IP of user is blocked
@@ -295,7 +295,7 @@ io.on('connection', (socket) => {
         console.log(`${userName} created room ${roomId}`);
         const userIp = socket.handshake.headers['x-forwarded-for'] ?
             socket.handshake.headers['x-forwarded-for'].split(',')[0] : socket.handshake.address;
-        socketList[socket.id] = {
+        socketList[socket.id.toString()] = {
             userName: userName,
             userEmail: userEmail,
             userFullName: userFullName,
@@ -315,7 +315,7 @@ io.on('connection', (socket) => {
         socket.join(roomId);
         const userIp = socket.handshake.headers['x-forwarded-for'] ?
             socket.handshake.headers['x-forwarded-for'].split(',')[0] : socket.handshake.address;
-        socketList[socket.id] = {
+        socketList[socket.id.toString()] = {
             userName: userName,
             userEmail: userEmail,
             userFullName: userFullName,
@@ -331,7 +331,12 @@ io.on('connection', (socket) => {
         const usersInRoom = [];
         clients.forEach((client) => {
             usersInRoom.push({
-                userId: client.id, info: socketList[client.id]
+                userId: client.id,
+                info: {
+                    userName: socketList[client.id].userName,
+                    video: socketList[client.id].video,
+                    audio: socketList[client.id].audio
+                }
             });
         });
         socket.to(roomId).emit('FE-userJoin', usersInRoom);
@@ -340,7 +345,11 @@ io.on('connection', (socket) => {
     socket.on('BE-callUser', ({ userToCall, from, signal }) => {
         // console.log(`${from} calling user ${userToCall}`);
         io.to(userToCall).emit('FE-receiveCall', {
-            signal, from, info: socketList[socket.id]
+            signal, from, info: {
+                userName: socketList[socket.id].userName,
+                video: socketList[socket.id].video,
+                audio: socketList[socket.id].audio
+            }
         });
     });
 
@@ -404,11 +413,11 @@ io.on('connection', (socket) => {
 
     socket.on("BE-leaveRoom", ({ roomId, leaver }) => {
         var leavingSocket = socket.id;
-        console.log(`${leaver} left room ${roomId}`);
         socket.to(roomId)
             .emit("FE-userLeave", { userId: socket.id, userName: [socket.id] });
         // socket.leave(roomId);
         socket.disconnect();
+        console.log(`${leaver} left room ${roomId}`);
         delete socketList[leavingSocket];
     });
 

@@ -6,6 +6,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
+import Link from '@mui/material/Link';
 import ContactMailRoundedIcon from '@mui/icons-material/ContactMailRounded';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
@@ -198,10 +199,9 @@ export default function Verify() {
               </Button>
               <Grid container justifyContent="flex-end">
                 <Grid item>
-                  <Typography
-                  fontSize={12}>
-                    *Haven't received OTP yet? Click on send OTP again.
-                  </Typography>
+                  <Link href="/login" variant="body2">
+                    Already registered? Login
+                  </Link>
                 </Grid>
               </Grid>
             </Box>

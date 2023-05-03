@@ -34,13 +34,13 @@ export default function SetupRoom() {
   const [videoEnabled, setVideoEnabled] = useState(false);
 
   function joinMeet() {
-    localStorage.setItem("audio", audioEnabled);
-    localStorage.setItem("video", videoEnabled);
     navigate(`/meetingRoom/${roomId}`, {
       state: {
         isHost: isHost,
         userName: userName,
-        userEmail: userEmail
+        userEmail: userEmail,
+        audioEnabled: audioEnabled,
+        videoEnabled: videoEnabled
       }
     });
   }
@@ -73,22 +73,28 @@ export default function SetupRoom() {
               padding: 2,
               paddingBottom: 3,
               borderRadius: 3,
-              width: '40vw'
+              width: '30vw'
             }}
           >
             <Avatar
               sx={{
                 bgcolor: deepPurple[500],
-                width: 56, height: 56
+                width: 60, height: 60, 
+                color: 'white', fontWeight: '700', fontSize: 25 
               }}>
               {userName[0]}
             </Avatar>
             <Typography variant="h6" sx={{
-              marginTop: 3,
+              marginTop: 2,
             }}>
               {userName.toUpperCase()}
             </Typography>
-            <Stack direction="row" marginTop="10vh" spacing={1}>
+            <Typography variant="p" sx={{
+              marginTop: 1,
+            }}>
+              <b>Meeting ID: {roomId}</b>
+            </Typography>
+            <Stack direction="row" marginTop="7vh" spacing={1}>
               <Box
                 onClick={() => setVideoEnabled(!videoEnabled)}
                 sx={{
