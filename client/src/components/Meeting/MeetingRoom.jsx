@@ -13,6 +13,7 @@ import { CssBaseline } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { styled } from '@mui/system';
 import Typography from '@mui/material/Typography';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
 
 
 const theme = createTheme({
@@ -273,9 +274,19 @@ export default function MeetingRoom() {
 
   function createUserVideo(peer, index, arr) {
     return (
-      <Grid item key={index} xs={6} md={4}
+      <Grid item key={index} xs={12} md={6}
         sx={{ position: 'relative' }}>
         <DisplayName>{peer.userName}</DisplayName>
+        <FullscreenIcon
+          onClick={expandScreenToggle}
+          sx={{
+            color: 'white',
+            position: 'absolute',
+            top: '10',
+            right: '0',
+            cursor: 'pointer',
+            zIndex: 1
+          }} />
         <VideoCard key={index} peer={peer} number={arr.length} />
       </Grid>
     );
@@ -329,6 +340,21 @@ export default function MeetingRoom() {
 
   const openSettings = () => {
     console.log('openSettings');
+  }
+
+
+  const expandScreenToggle = (e) => {
+    const elem = e.currentTarget.parentElement;
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch((err) => {
+        alert(`An error occurred while trying to switch off fullscreen mode: ${err.message}`);
+      });
+    } else {
+      elem.requestFullscreen().catch((err) => {
+        alert(`An error occurred while trying to switch into fullscreen mode: ${err.message}`);
+      });
+    }
   }
 
   // To share screen
@@ -395,7 +421,7 @@ export default function MeetingRoom() {
           alignItems: 'center',
         }}>
         <CssBaseline />
-        <Box fullwidth sx={{
+        <Box sx={{
           marginTop: '5vh',
           maxHeight: '75vh',
           overflowY: 'scroll',
@@ -407,13 +433,23 @@ export default function MeetingRoom() {
             direction="row"
             justifyContent="space-evenly"
             alignItems="center">
-            <Grid item xs={12} md={4}
+            <Grid item xs={12} md={6}
               sx={{
                 position: 'relative',
                 minHeight: '20vh',
-                minWidth: '20vw'
+                minWidth: '20vw',
               }}>
               <DisplayName>{currentUser}</DisplayName>
+              <FullscreenIcon
+                onClick={expandScreenToggle}
+                sx={{
+                  color: 'white',
+                  position: 'absolute',
+                  top: '10',
+                  right: '0',
+                  cursor: 'pointer',
+                  zIndex: 1
+                }} />
               <video
                 autoPlay
                 playsInline

@@ -20,7 +20,6 @@ const VideoCard = (props) => {
       style={{
         border: '2px solid white',
         borderRadius: 5,
-        transform: 'scaleX(-1)',
       }}
     >
     </video>
