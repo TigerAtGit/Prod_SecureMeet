@@ -191,6 +191,12 @@ export default function Signup() {
               >
                 Sign Up
               </Button>
+              <Typography component='p' sx={{
+                fontSize: 12,
+                marginBottom: 2
+              }}>
+                *Password should be of atleast 8 characters
+              </Typography>
               <Grid container justifyContent="flex-end">
                 <Grid item>
                   <Link href="/register" variant="body2">

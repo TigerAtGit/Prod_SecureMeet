@@ -472,26 +472,27 @@ export default function MeetingRoom() {
           </Grid>
         </Box>
 
-        <Typography variant='h5' sx={{
+        <Typography variant='h6' sx={{
           marginTop: "85vh",
           position: "absolute",
           left: '5vw',
           color: 'white',
           fontWeight: "medium",
+          backgroundColor: 'black',
+          borderRadius: "15px",
           padding: 1,
+          paddingX: 3
         }}>Room Id: {roomId} <br /> User: {currentUser}</Typography>
 
         <Chat />
         <BottomBar
           roomId={roomId}
-          username={currentUser}
           userAV={userAV}
           toggleCamera={toggleCamera}
           toggleAudio={toggleAudio}
           leaveRoom={leaveRoom}
           shareScreen={shareScreen}
           screenShareActive={screenShare}
-          openSettings={openSettings}
           openChat={handleChatOpen}
           closeChat={handleChatClose}
           chatopen={chatOpen}

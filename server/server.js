@@ -109,8 +109,8 @@ app.post(
             .trim()
             .isAlpha("en-IN")
             .optional({ checkFalsy: true }),
-        body("password", "Password should be atleast of 6 characters").isLength({
-            min: 6,
+        body("password", "Password should be of atleast 8 characters").isLength({
+            min: 8,
         }),
     ],
     async (req, res) => {

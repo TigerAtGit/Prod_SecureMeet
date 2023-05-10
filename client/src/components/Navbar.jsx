@@ -193,9 +193,9 @@ function Navbar() {
                 <MenuItem>
                   <Typography textAlign="center">{userEmail}</Typography>
                 </MenuItem>
-                <MenuItem onClick={handleCloseUserMenu}>
+                {/* <MenuItem onClick={handleCloseUserMenu}>
                   <Typography textAlign="center">My Account</Typography>
-                </MenuItem>
+                </MenuItem> */}
                 <MenuItem onClick={ () => {
                     localStorage.clear();
                     window.location.href = "/";

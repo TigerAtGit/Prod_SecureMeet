@@ -100,6 +100,7 @@ export default function CreateMeet() {
                   />
                 </Grid>
                 <Grid item xs={12}>
+                  {roomLabel == '' ? '* Generate a meeting ID clicking below' : ''}
                   <TextField
                     fullWidth
                     disabled
