@@ -55,11 +55,9 @@ export default function Participants({ isHost, participants, open, removePartici
               return (
                 <ListItem key={userId} sx={{ marginBottom: 0.5, bgcolor: 'wheat' }}>
                   <ListItemAvatar>
-                    <Tooltip title={info.userEmail}>
                       <Avatar>
                         <PersonIcon />
                       </Avatar>
-                    </Tooltip>
                   </ListItemAvatar>
                   <ListItemText primary={info.host ? info.userName + ' (Host)' : info.userName} />
                   {isHost && <>
