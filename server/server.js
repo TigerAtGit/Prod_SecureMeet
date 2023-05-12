@@ -429,8 +429,9 @@ io.on('connection', (socket) => {
                 client.to(roomId)
                     .emit("FE-userRemoved", { userId: clientId, userName: socketList[clientId].userName });
                 io.to(clientId).emit("FE-youRemoved");
-                // client.disconnect(true);
+                client.disconnect();
                 delete socketList[clientId];
+                return;
             }
         });
     })
